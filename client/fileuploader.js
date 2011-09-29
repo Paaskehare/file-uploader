@@ -559,8 +559,6 @@ qq.extend(qq.FileUploader.prototype, {
      * Gets one of the elements listed in qq._options.classes
      **/
     _find: function(parent, type){
-        console.log(qq._options);
-        console.log(type);
         var element = qq.getByClass(parent, qq._options.classes[type])[0];
         if (!element){
             throw new Error('element not found ' + type);
@@ -812,7 +810,6 @@ qq.UploadButton.prototype = {
         this._element.appendChild(input);
 
         var self = this;
-        console.log(qq._options);
 
         qq.attach(input, 'change', function(){
             qq._options.onChange(input);
