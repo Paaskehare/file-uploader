@@ -12,6 +12,7 @@
 //
 
 var qq = qq || {};
+qq._options = {};$
 
 /**
  * Adds all missing properties from second obj to first obj
@@ -249,7 +250,7 @@ var qq = qq || {};
  * Creates upload button, validates upload, but doesn't create file list or dd.
  */
 qq.FileUploaderBasic = function(o){
-    this._options = {
+    qq._options = {
         // set to true to see the server response
         debug: false,
         action: '/server/upload',
@@ -279,14 +280,14 @@ qq.FileUploaderBasic = function(o){
             alert(message);
         }
     };
-    qq.extend(this._options, o);
+    qq.extend(qq._options, o);
 
     // number of files being uploaded
     this._filesInProgress = 0;
     this._handler = this._createUploadHandler();
 
-    if (this._options.button){
-        this._button = this._createUploadButton(this._options.button);
+    if (qq._options.button){
+        this._button = this._createUploadButton(qq._options.button);
     }
 
     this._preventLeaveInProgress();
@@ -294,7 +295,7 @@ qq.FileUploaderBasic = function(o){
 
 qq.FileUploaderBasic.prototype = {
     setParams: function(params){
-        this._options.params = params;
+        qq._options.params = params;
     },
     getInProgress: function(){
         return this._filesInProgress;
@@ -304,7 +305,7 @@ qq.FileUploaderBasic.prototype = {
 
         return new qq.UploadButton({
             element: element,
-            multiple: this._options.multiple && qq.UploadHandlerXhr.isSupported(),
+            multiple: qq._options.multiple && qq.UploadHandlerXhr.isSupported(),
             onChange: function(input){
                 self._onInputChange(input);
             }
@@ -321,20 +322,20 @@ qq.FileUploaderBasic.prototype = {
         }
 
         var handler = new qq[handlerClass]({
-            debug: this._options.debug,
-            action: this._options.action,
-            maxConnections: this._options.maxConnections,
+            debug: qq._options.debug,
+            action: qq._options.action,
+            maxConnections: qq._options.maxConnections,
             onProgress: function(id, fileName, loaded, total){
                 self._onProgress(id, fileName, loaded, total);
-                self._options.onProgress(id, fileName, loaded, total);
+                qq._options.onProgress(id, fileName, loaded, total);
             },
             onComplete: function(id, fileName, result){
                 self._onComplete(id, fileName, result);
-                self._options.onComplete(id, fileName, result);
+                qq._options.onComplete(id, fileName, result);
             },
             onCancel: function(id, fileName){
                 self._onCancel(id, fileName);
-                self._options.onCancel(id, fileName);
+                qq._options.onCancel(id, fileName);
             }
         });
 
@@ -348,9 +349,9 @@ qq.FileUploaderBasic.prototype = {
 
             var e = e || window.event;
             // for ie, ff
-            e.returnValue = self._options.messages.onLeave;
+            e.returnValue = qq._options.messages.onLeave;
             // for webkit
-            return self._options.messages.onLeave;
+            return qq._options.messages.onLeave;
         });
     },
     _onSubmit: function(id, fileName){
@@ -361,7 +362,7 @@ qq.FileUploaderBasic.prototype = {
     _onComplete: function(id, fileName, result){
         this._filesInProgress--;
         if (result.error){
-            this._options.showMessage(result.error);
+            qq._options.showMessage(result.error);
         }
     },
     _onCancel: function(id, fileName){
@@ -392,9 +393,9 @@ qq.FileUploaderBasic.prototype = {
         var id = this._handler.add(fileContainer);
         var fileName = this._handler.getName(id);
 
-        if (this._options.onSubmit(id, fileName) !== false){
+        if (qq._options.onSubmit(id, fileName) !== false){
             this._onSubmit(id, fileName);
-            this._handler.upload(id, this._options.params);
+            this._handler.upload(id, qq._options.params);
         }
     },
     _validateFile: function(file){
@@ -418,11 +419,11 @@ qq.FileUploaderBasic.prototype = {
             this._error('emptyError', name);
             return false;
 
-        } else if (size && this._options.sizeLimit && size > this._options.sizeLimit){
+        } else if (size && qq._options.sizeLimit && size > qq._options.sizeLimit){
             this._error('sizeError', name);
             return false;
 
-        } else if (size && size < this._options.minSizeLimit){
+        } else if (size && size < qq._options.minSizeLimit){
             this._error('minSizeError', name);
             return false;
         }
@@ -430,15 +431,15 @@ qq.FileUploaderBasic.prototype = {
         return true;
     },
     _error: function(code, fileName){
-        var message = this._options.messages[code];
+        var message = qq._options.messages[code];
         function r(name, replacement){ message = message.replace(name, replacement); }
 
         r('{file}', this._formatFileName(fileName));
-        r('{extensions}', this._options.allowedExtensions.join(', '));
-        r('{sizeLimit}', this._formatSize(this._options.sizeLimit));
-        r('{minSizeLimit}', this._formatSize(this._options.minSizeLimit));
+        r('{extensions}', qq._options.allowedExtensions.join(', '));
+        r('{sizeLimit}', this._formatSize(qq._options.sizeLimit));
+        r('{minSizeLimit}', this._formatSize(qq._options.minSizeLimit));
 
-        this._options.showMessage(message);
+        qq._options.showMessage(message);
     },
     _formatFileName: function(name){
         if (name.length > 33){
@@ -448,7 +449,7 @@ qq.FileUploaderBasic.prototype = {
     },
     _isAllowedExtension: function(fileName){
         var ext = (-1 !== fileName.indexOf('.')) ? fileName.replace(/.*[.]/, '').toLowerCase() : '';
-        var allowed = this._options.allowedExtensions;
+        var allowed = qq._options.allowedExtensions;
 
         if (!allowed.length){return true;}
 
@@ -479,8 +480,24 @@ qq.FileUploader = function(o){
     qq.FileUploaderBasic.apply(this, arguments);
 
     // additional options
-    qq.extend(this._options, {
+    qq.extend(qq._options, {
+        name: 'file',
         element: null,
+        action: '/upload.php',
+        multiple: false,
+        debug: false,
+        maxConnections: 999,
+
+        onProgress: function(id, fileName, loaded, total){},
+        onComplete: function(id, fileName, response){},
+        onCancel: function(id, fileName){},
+        onChange: function(input){},
+        onEnter: function(e){},
+        onLeave: function(e){},
+        // is not fired when leaving element by hovering descendants
+        onLeaveNotDescendants: function(e){},
+        onDrop: function(e){},
+
         // if set, will be used instead of qq-upload-list in template
         listElement: null,
 
@@ -502,6 +519,8 @@ qq.FileUploader = function(o){
         classes: {
             // used to get elements from templates
             button: 'qq-upload-button',
+            buttonHover: 'qq-upload-button-hover',
+            buttonFocus: 'qq-upload-button-focus',
             drop: 'qq-upload-drop-area',
             dropActive: 'qq-upload-drop-area-active',
             list: 'qq-upload-list',
@@ -518,13 +537,13 @@ qq.FileUploader = function(o){
         }
     });
     // overwrite options with user supplied
-    qq.extend(this._options, o);
+    qq.extend(qq._options, o);
 
-    this._element = this._options.element;
-    this._element.innerHTML = this._options.template;
-    this._listElement = this._options.listElement || this._find(this._element, 'list');
+    this._element = qq._options.element;
+    this._element.innerHTML = qq._options.template;
+    this._listElement = qq._options.listElement || this._find(this._element, 'list');
 
-    this._classes = this._options.classes;
+    this._classes = qq._options.classes;
 
     this._button = this._createUploadButton(this._find(this._element, 'button'));
 
@@ -537,10 +556,12 @@ qq.extend(qq.FileUploader.prototype, qq.FileUploaderBasic.prototype);
 
 qq.extend(qq.FileUploader.prototype, {
     /**
-     * Gets one of the elements listed in this._options.classes
+     * Gets one of the elements listed in qq._options.classes
      **/
     _find: function(parent, type){
-        var element = qq.getByClass(parent, this._options.classes[type])[0];
+        console.log(qq._options);
+        console.log(type);
+        var element = qq.getByClass(parent, qq._options.classes[type])[0];
         if (!element){
             throw new Error('element not found ' + type);
         }
@@ -574,10 +595,6 @@ qq.extend(qq.FileUploader.prototype, {
         });
         qq.attach(document, 'dragleave', function(e){
             if (!dz._isValidFileDrag(e)) return;
-
-            var relatedTarget = document.elementFromPoint(e.clientX, e.clientY);
-            // only fire when leaving document out
-            if ( ! relatedTarget || relatedTarget.nodeName == "HTML"){}
         });
     },
     _onSubmit: function(id, fileName){
@@ -615,7 +632,7 @@ qq.extend(qq.FileUploader.prototype, {
         }
     },
     _addToList: function(id, fileName){
-        var item = qq.toElement(this._options.fileTemplate);
+        var item = qq.toElement(qq._options.fileTemplate);
         item.qqFileId = id;
 
         var fileElement = this._find(item, 'file');
@@ -657,17 +674,9 @@ qq.extend(qq.FileUploader.prototype, {
 });
 
 qq.UploadDropZone = function(o){
-    this._options = {
-        element: null,
-        onEnter: function(e){},
-        onLeave: function(e){},
-        // is not fired when leaving element by hovering descendants
-        onLeaveNotDescendants: function(e){},
-        onDrop: function(e){}
-    };
-    qq.extend(this._options, o);
+    qq.extend(qq._options, o);
 
-    this._element = this._options.element;
+    this._element = qq._options.element;
 
     this._disableDropOutside();
     this._attachEvents();
@@ -708,26 +717,26 @@ qq.UploadDropZone.prototype = {
         qq.attach(self._element, 'dragenter', function(e){
             if (!self._isValidFileDrag(e)) return;
 
-            self._options.onEnter(e);
+            qq._options.onEnter(e);
         });
 
         qq.attach(self._element, 'dragleave', function(e){
             if (!self._isValidFileDrag(e)) return;
 
-            self._options.onLeave(e);
+            qq._options.onLeave(e);
 
             var relatedTarget = document.elementFromPoint(e.clientX, e.clientY);
             // do not fire when moving a mouse over a descendant
             if (qq.contains(this, relatedTarget)) return;
 
-            self._options.onLeaveNotDescendants(e);
+            qq._options.onLeaveNotDescendants(e);
         });
 
         qq.attach(self._element, 'drop', function(e){
             if (!self._isValidFileDrag(e)) return;
 
             e.preventDefault();
-            self._options.onDrop(e);
+            qq._options.onDrop(e);
         });
     },
     _isValidFileDrag: function(e){
@@ -744,20 +753,9 @@ qq.UploadDropZone.prototype = {
 };
 
 qq.UploadButton = function(o){
-    this._options = {
-        element: null,
-        // if set to true adds multiple attribute to file input
-        multiple: false,
-        // name attribute of file input
-        name: 'file',
-        onChange: function(input){},
-        hoverClass: 'qq-upload-button-hover',
-        focusClass: 'qq-upload-button-focus'
-    };
+    qq.extend(qq._options, o);
 
-    qq.extend(this._options, o);
-
-    this._element = this._options.element;
+    this._element = qq._options.element;
 
     // make button suitable container for input
     qq.css(this._element, {
@@ -782,18 +780,18 @@ qq.UploadButton.prototype = {
             qq.remove(this._input);
         }
 
-        qq.removeClass(this._element, this._options.focusClass);
+        qq.removeClass(this._element, qq._options.focusClass);
         this._input = this._createInput();
     },
     _createInput: function(){
         var input = document.createElement("input");
 
-        if (this._options.multiple){
+        if (qq._options.multiple){
             input.setAttribute("multiple", "multiple");
         }
 
         input.setAttribute("type", "file");
-        input.setAttribute("name", this._options.name);
+        input.setAttribute("name", qq._options.name);
 
         qq.css(input, {
             position: 'absolute',
@@ -814,21 +812,23 @@ qq.UploadButton.prototype = {
         this._element.appendChild(input);
 
         var self = this;
+        console.log(qq._options);
+
         qq.attach(input, 'change', function(){
-            self._options.onChange(input);
+            qq._options.onChange(input);
         });
 
         qq.attach(input, 'mouseover', function(){
-            qq.addClass(self._element, self._options.hoverClass);
+            qq.addClass(self._element, qq._options.classes.buttonHover);
         });
         qq.attach(input, 'mouseout', function(){
-            qq.removeClass(self._element, self._options.hoverClass);
+            qq.removeClass(self._element, qq._options.classes.buttonHover);
         });
         qq.attach(input, 'focus', function(){
-            qq.addClass(self._element, self._options.focusClass);
+            qq.addClass(self._element, qq._options.classes.buttonFocus);
         });
         qq.attach(input, 'blur', function(){
-            qq.removeClass(self._element, self._options.focusClass);
+            qq.removeClass(self._element, qq._options.classes.buttonFocus);
         });
 
         // IE and Opera, unfortunately have 2 tab stops on file input
@@ -846,16 +846,7 @@ qq.UploadButton.prototype = {
  * Class for uploading files, uploading itself is handled by child classes
  */
 qq.UploadHandlerAbstract = function(o){
-    this._options = {
-        debug: false,
-        action: '/upload.php',
-        // maximum number of concurrent uploads
-        maxConnections: 999,
-        onProgress: function(id, fileName, loaded, total){},
-        onComplete: function(id, fileName, response){},
-        onCancel: function(id, fileName){}
-    };
-    qq.extend(this._options, o);
+    qq.extend(qq._options, o);
 
     this._queue = [];
     // params for files in queue
@@ -863,7 +854,7 @@ qq.UploadHandlerAbstract = function(o){
 };
 qq.UploadHandlerAbstract.prototype = {
     log: function(str){
-        if (this._options.debug && window.console) console.log('[uploader] ' + str);
+        if (qq._options.debug && window.console) console.log('[uploader] ' + str);
     },
     /**
      * Adds file or file input to the queue
@@ -881,7 +872,7 @@ qq.UploadHandlerAbstract.prototype = {
         this._params[id] = copy;
 
         // if too many active uploads, wait...
-        if (len <= this._options.maxConnections){
+        if (len <= qq._options.maxConnections){
             this._upload(id, this._params[id]);
         }
     },
@@ -931,7 +922,7 @@ qq.UploadHandlerAbstract.prototype = {
         var i = qq.indexOf(this._queue, id);
         this._queue.splice(i, 1);
 
-        var max = this._options.maxConnections;
+        var max = qq._options.maxConnections;
 
         if (this._queue.length >= max && i < max){
             var nextId = this._queue[max-1];
@@ -971,7 +962,7 @@ qq.extend(qq.UploadHandlerForm.prototype, {
         return this._inputs[id].value.replace(/.*(\/|\\)/, "");
     },
     _cancel: function(id){
-        this._options.onCancel(id, this.getName(id));
+        qq._options.onCancel(id, this.getName(id));
 
         delete this._inputs[id];
 
@@ -1004,7 +995,7 @@ qq.extend(qq.UploadHandlerForm.prototype, {
 
             var response = self._getIframeContentJSON(iframe);
 
-            self._options.onComplete(id, fileName, response);
+            qq._options.onComplete(id, fileName, response);
             self._dequeue(id);
 
             delete self._inputs[id];
@@ -1092,7 +1083,7 @@ qq.extend(qq.UploadHandlerForm.prototype, {
         // Because in this case file won't be attached to request
         var form = qq.toElement('<form method="post" enctype="multipart/form-data"></form>');
 
-        var queryString = qq.obj2url(params, this._options.action);
+        var queryString = qq.obj2url(params, qq._options.action);
 
         form.setAttribute('action', queryString);
         form.setAttribute('target', iframe.name);
@@ -1175,7 +1166,7 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
         xhr.upload.onprogress = function(e){
             if (e.lengthComputable){
                 self._loaded[id] = e.loaded;
-                self._options.onProgress(id, name, e.loaded, e.total);
+                qq._options.onProgress(id, name, e.loaded, e.total);
             }
         };
 
@@ -1188,7 +1179,7 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
         // build query string
         params = params || {};
         params['qqfile'] = name;
-        var queryString = qq.obj2url(params, this._options.action);
+        var queryString = qq.obj2url(params, qq._options.action);
 
         xhr.open("POST", queryString, true);
         xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
@@ -1203,7 +1194,7 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
         var name = this.getName(id);
         var size = this.getSize(id);
 
-        this._options.onProgress(id, name, size, size);
+        qq._options.onProgress(id, name, size, size);
 
         if (xhr.status == 200){
             this.log("xhr - server response received");
@@ -1217,10 +1208,10 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
                 response = {};
             }
 
-            this._options.onComplete(id, name, response);
+            qq._options.onComplete(id, name, response);
 
         } else {
-            this._options.onComplete(id, name, {});
+            qq._options.onComplete(id, name, {});
         }
 
         this._files[id] = null;
@@ -1228,7 +1219,7 @@ qq.extend(qq.UploadHandlerXhr.prototype, {
         this._dequeue(id);
     },
     _cancel: function(id){
-        this._options.onCancel(id, this.getName(id));
+        qq._options.onCancel(id, this.getName(id));
 
         this._files[id] = null;
 
